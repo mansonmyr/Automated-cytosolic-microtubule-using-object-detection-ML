@@ -1,0 +1,127 @@
+# 1️⃣ Imports
+import torch
+import gradio as gr
+from PIL import Image, ImageDraw
+import numpy as np
+import pandas as pd
+from google.colab import files
+
+# 2️⃣ Upload TorchScript model
+uploaded = files.upload()
+for fn in uploaded.keys():
+    ts_path = fn
+    print(f"Uploaded TorchScript model: {ts_path}")
+
+# 3️⃣ Load TorchScript model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = torch.jit.load(ts_path).to(device)
+model.eval()
+print("Model loaded successfully!")
+
+
+# Optional class names (update if different)
+class_names = ["cell", "cytosolic_MT", "centrosomal_MT"]
+
+# 4️⃣ Letterbox / Preprocessing function
+from PIL import Image
+import numpy as np
+
+MODEL_SIZE = 640  # YOLOv10 ONNX input size
+
+def letterbox_image(img, target_size=(MODEL_SIZE, MODEL_SIZE)):
+    """Resize image with unchanged aspect ratio using padding"""
+    iw, ih = img.size
+    w, h = target_size
+    scale = min(w/iw, h/ih)
+    nw = int(iw*scale)
+    nh = int(ih*scale)
+    img_resized = img.resize((nw, nh), Image.BICUBIC)
+
+    # create new image and paste
+    new_img = Image.new("RGB", target_size, (114,114,114))
+    paste_x = (w - nw) // 2
+    paste_y = (h - nh) // 2
+    new_img.paste(img_resized, (paste_x, paste_y))
+
+    # Convert to numpy and normalize
+    img_np = np.array(new_img).astype(np.float32) / 255.0
+    img_np = np.transpose(img_np, (2,0,1))  # HWC -> CHW
+    img_np = np.expand_dims(img_np, axis=0)  # add batch dim
+    return img_np, scale, paste_x, paste_y
+
+# 5️⃣ YOLOv10 Postprocessing
+def parse_yolo_output(preds, scale, pad_x, pad_y, conf_threshold=0.25):
+    """
+    Convert YOLO output to bounding boxes in original image size
+    preds: [1, N, 6] -> [x1, y1, x2, y2, score, class]
+    """
+    boxes, scores, class_ids = [], [], []
+    for det in preds[0]:
+        x1, y1, x2, y2, score, cls_id = det
+        if score < conf_threshold:
+            continue
+        # Rescale box to original image
+        x1 = (x1 - pad_x) / scale
+        y1 = (y1 - pad_y) / scale
+        x2 = (x2 - pad_x) / scale
+        y2 = (y2 - pad_y) / scale
+        boxes.append([x1, y1, x2, y2])
+        scores.append(float(score))
+        class_ids.append(int(cls_id))
+    return boxes, scores, class_ids
+
+# 6️⃣ Draw bounding boxes
+def draw_boxes(img, boxes, class_ids, scores):
+    img_draw = img.copy()
+    draw = ImageDraw.Draw(img_draw)
+    for box, cls_id, score in zip(boxes, class_ids, scores):
+        x1, y1, x2, y2 = box
+        color = (255,0,0) if cls_id==1 else (0,255,0) if cls_id==2 else (0,0,255)
+        draw.rectangle([x1, y1, x2, y2], outline=color, width=2)
+        draw.text((x1, y1-10), f"{class_names[cls_id]} {score:.2f}", fill=color)
+    return img_draw
+
+# 7️⃣ Gradio inference function
+def detect_objects(img):
+    img_input, scale, pad_x, pad_y = letterbox_image(img)
+    # The original code used `session.run` and `input_name` which are for ONNX models.
+    # For a TorchScript model, we need to call the model directly with the tensor input.
+    # Convert numpy input to torch tensor and move to device
+    img_tensor = torch.from_numpy(img_input).to(device)
+    with torch.no_grad():
+        outputs = model(img_tensor)
+
+    # TorchScript YOLOv10 typically outputs a list of tensors for detections (boxes, scores, classes).
+    # The exact format might vary, but assuming outputs[0] contains detections in a format similar to ONNX output [1, N, 6]
+    # We need to move the output to CPU and convert to numpy for postprocessing
+    preds = outputs[0].cpu().numpy() if isinstance(outputs, (list, tuple)) else outputs.cpu().numpy()
+
+    boxes, scores, class_ids = parse_yolo_output(preds, scale, pad_x, pad_y)
+
+    # Overlay image
+    overlay_img = draw_boxes(img, boxes, class_ids, scores)
+
+    # Count per class
+    class_counts = {}
+    for cls_id in class_ids:
+        class_counts[cls_id] = class_counts.get(cls_id, 0) + 1
+    df = pd.DataFrame({
+        "Class": [class_names[i] for i in class_counts.keys()],
+        "Count": list(class_counts.values())
+    })
+
+    return overlay_img, df
+
+# 8️⃣ Launch Gradio
+iface = gr.Interface(
+    fn=detect_objects,
+    inputs=gr.Image(type="pil", label="Upload Microscopy Image (.jpg)"),
+    outputs=[
+        gr.Image(type="pil", label="Detected Overlay"),
+        gr.Dataframe(headers=["Class", "Count"], label="Detection Results")
+    ],
+    title="Microtubule Detection Demo (YOLOv10 TorchScript)",
+    description="Upload your microscopy image to detect cells, cytosolic microtubules, and centrosomal microtubules."
+)
+
+iface.launch(share=True)
