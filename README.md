@@ -20,13 +20,16 @@ Fluorescence microscopy images containing cytosolic microtubule structures were 
 2. Data Annotation using LabelMe
 Manual annotation was performed using the annotation tool LabelMe. Bounding boxes were drawn around cytosolic microtubule structures to generate labeled training data. LabelMe exports annotations in JSON format, which contains the object class labels and coordinates describing the annotated regions.
 
-3. Dataset Conversion to YOLO Format
+<img width="668" height="395" alt="image" src="https://github.com/user-attachments/assets/23175b89-736d-44ac-b95d-b20808d7236f" />
+
+
+4. Dataset Conversion to YOLO Format
 The JSON annotation files were converted into the YOLO detection format to enable training with the YOLOv10 model. The YOLO annotation format represents each detected object using normalized bounding box coordinates.Each image has a corresponding annotation file containing the labeled objects.
 
-4. Model Training using YOLOv10
+5. Model Training using YOLOv10
 The converted dataset was used to train an object detection model based on YOLOv10, a real-time end-to-end object detection architecture designed for high detection accuracy and efficient inference. Training and experimentation were performed using Kaggle Notebooks and PyTorch / Ultralytics YOLO framework. The trained model was exported in TorchScript format for deployment.
 
-5. Web-Based Inference Platform (Gradio)
+6. Web-Based Inference Platform (Gradio)
 To enable interactive testing, the trained YOLO model was integrated into a web interface using Gradio. The Gradio application allows users to:
 	•	Upload microscopy images
 	•	Run microtubule detection using the trained model
