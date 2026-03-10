@@ -54,4 +54,5 @@ Code development and prototyping were partially assisted by AI coding tools incl
 These tools were used to assist with debugging, workflow design, and implementation of machine learning pipelines.
 
 # Citation
+If you use this software, please cite it as: K.H.,Ooi.(2026).Automated-cytosolic-microtubule-using-object-detection-ML. version: 1.0.0. date-released: 2026-03-11.https://github.com/mansonmyr/Automated-cytosolic-microtubule-using-object-detection-ML
 
