@@ -1,0 +1,95 @@
+import os
+from collections import OrderedDict
+import json
+import cv2
+from pathlib import Path
+def get_label_id_map(json_dir:str):
+    label_set = set()
+
+    label_set = set()
+
+    for file_name in os.listdir(json_dir):
+        if file_name.endswith('json'):
+            json_path = os.path.join(json_dir, file_name)
+            data = json.load(open(json_path))
+            for shape in data['shapes']:
+                label_set.add(shape['label'])
+    
+    return OrderedDict([(label, label_id) for label_id, label in enumerate(label_set)])
+jsonpath = "/kaggle/input/microtubule-dataset2/channel2_input2/json"
+get_label_id_map(json_dir=jsonpath)
+def reformat_labelme_box(rectangle):
+    __get_dist = lambda int_list: max(int_list) - min(int_list)
+    
+    x_lists = [corner[0] for corner in rectangle] # save the x-axis info        
+    y_lists = [corner[1] for corner in rectangle] # save the y-axis info
+    
+    return min(x_lists), __get_dist(x_lists), min(y_lists), __get_dist(y_lists)
+def get_image_dimensions(img_dir:str, json_name:str):
+    possible_extensions = ['.tif']
+
+    for ext in possible_extensions:
+        temp_img_file = os.path.join(img_dir, json_name + ext)
+        temp_img_file_path = Path(temp_img_file)
+        if temp_img_file_path.exists():
+            img = cv2.imread(temp_img_file)
+            img_h, img_w, _ = img.shape
+            return img_h, img_w
+
+    raise FileNotFoundError(f"No valid image file found for {json_name} with extensions {possible_extensions}")
+def transform_coordinates(img_height, img_width, shape):
+
+    obj_x_min, obj_w, obj_y_min, obj_h = reformat_labelme_box(shape['points'])
+    yolo_center_x= round(float((obj_x_min + obj_w / 2.0) / img_width), 6) # Divide by image with to re-scale
+    yolo_center_y = round(float((obj_y_min + obj_h / 2.0) / img_height), 6)
+    yolo_w = round(float(obj_w / img_width), 6) # Round to six digits only
+    yolo_h = round(float(obj_h / img_height), 6)
+    
+    return yolo_center_x, yolo_center_y, yolo_w, yolo_h
+def save_yolo_label(json_name:str, txt_dir:str, yolo_obj_list:list):
+    txt_path = os.path.join(txt_dir, json_name + '.txt')
+
+    # Write new matadata by line 
+    with open(txt_path, 'w+') as f:
+        for yolo_obj_idx, yolo_obj in enumerate(yolo_obj_list):
+            yolo_obj_line = ""
+            for i in yolo_obj:
+                yolo_obj_line += f'{i} '
+            yolo_obj_line = yolo_obj_line[:-1]
+            if yolo_obj_idx != len(yolo_obj_list) - 1:
+                yolo_obj_line += '\n'
+            f.write(yolo_obj_line)
+def labelme2yolo_V2(json_dir:str, img_dir:str, txt_dir:str):
+    """Transform all files from Labelme to YOLO"""
+    # Get the ID mappings
+    id_map = get_label_id_map(json_dir)
+
+    for file_name in os.listdir(json_dir):
+        json_path = os.path.join(json_dir, file_name)
+        json_data = json.load(open(json_path))
+        json_name = file_name[:-5]
+        print('Converting %s ...' % json_name)
+        
+        img_h, img_w = get_image_dimensions(img_dir=img_dir, json_name=json_name)
+
+        yolo_obj_list = []
+        for shape in json_data['shapes']:
+            
+            # Obtain corresponding Yolo label
+            label_id = id_map[shape['label']]
+            
+            # Transform metadata 
+            yolo_center_x, yolo_center_y, yolo_w, yolo_h = transform_coordinates(img_height=img_h, img_width=img_w, shape = shape)
+            yolo_obj = (label_id, yolo_center_x, yolo_center_y, yolo_w, yolo_h)
+
+            # Store info in a list 
+            yolo_obj_list.append(yolo_obj)
+
+        # Save new annotations
+        save_yolo_label(json_name, txt_dir, yolo_obj_list) 
+os.makedirs('/kaggle/working/output_txt', exist_ok=True) 
+json_dir = "/kaggle/input/microtubule-dataset2/channel2_input2/json"
+img_dir = "/kaggle/input/microtubule-dataset2/channel2_input2"
+txt_dir = "/kaggle/working/output_txt"
+
+labelme2yolo_V2(json_dir, img_dir, txt_dir)
