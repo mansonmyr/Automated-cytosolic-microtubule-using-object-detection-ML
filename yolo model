@@ -1,0 +1,54 @@
+import numpy as np 
+import pandas as pd 
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+!pip install -q ultralytics
+from ultralytics import YOLO
+
+import yaml
+data_config = {
+    'path': '/kaggle/input/yolo-model-training/yolo_dataset',
+    'train': '/kaggle/input/yolo-model-training/yolo_dataset/train txt file',
+    'val': '/kaggle/input/yolo-model-training/yolo_dataset/val txt file',
+    'nc': 3, # Number of classes
+    'names': ['cell', 'cytosolic', 'centrosomal'] # Class names
+}
+
+with open('data.yaml', 'w') as f:
+    yaml.dump(data_config, f)
+
+model = YOLO('yolov10n.pt')
+model.train(
+    data='data.yaml',
+    epochs=50,
+    imgsz=640,
+    batch=16,
+    save=True
+)
+!pip install -U ultralytics
+from ultralytics import YOLO
+model = YOLO("yolov10n.pt") 
+
+model.train(
+    data="/kaggle/working/data.yaml",
+    epochs=80,
+    imgsz=1024,
+    batch=2,
+    amp=True,
+    device=0,
+    workers=2,
+    patience=20,
+    project="runs",
+    name="yolov10n_refined"
+)
+
+model.predict(
+    source="/kaggle/input/yolo-model-training/yolo_dataset/val txt file",
+    conf=0.25,
+    save=True
+)
+
+model.export(format="torchscript")
