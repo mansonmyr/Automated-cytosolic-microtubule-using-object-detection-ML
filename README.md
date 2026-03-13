@@ -1,5 +1,5 @@
 # Automated-cytosolic-microtubule-using-object-detection-ML
-This repository presents a deep learning pipeline for automated detection of cytosolic microtubules from fluorescence microscopy images using modern object detection techniques. 
+This repository presents a prototype deep learning pipeline for automated detection of cytosolic microtubules from fluorescence microscopy images using modern object detection techniques. 
 
 # Overview
 Cytosolic microtubules play essential roles in cellular structure, intracellular transport, and mitotic spindle organization. Manual quantification of microtubule structures from microscopy images is time-consuming and subject to user bias.
