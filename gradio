@@ -20,7 +20,7 @@ print("Model loaded successfully!")
 
 
 # Optional class names (update if different)
-class_names = ["cell", "cytosolic_MT", "centrosomal_MT"]
+class_names = ["cytosolic_MT", "centrosomal_MT", "cell"]
 
 # 4️⃣ Letterbox / Preprocessing function
 from PIL import Image
