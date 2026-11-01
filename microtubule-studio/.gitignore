@@ -1,0 +1,13 @@
+prepared_tiles/
+prepared_native*/
+training_runs/
+runs/
+evaluation/
+*.log
+*.cache
+*.pt
+*.onnx
+*.torchscript
+*.zip
+__pycache__/
+.DS_Store

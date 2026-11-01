@@ -1,0 +1,7 @@
+{
+  "name": "Baseline YOLOv10n",
+  "url": "model.onnx",
+  "inputSize": 640,
+  "overlap": 160,
+  "classes": ["cytosolic", "centrosomal", "cell"]
+}
