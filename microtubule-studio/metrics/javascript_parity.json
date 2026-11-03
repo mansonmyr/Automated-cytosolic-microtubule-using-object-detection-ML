@@ -1,0 +1,152 @@
+[
+  {
+    "source": "Experiment-1678_C2_sum",
+    "cytosolic_candidates": 66,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1679_C2_sum",
+    "cytosolic_candidates": 144,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1680_C2_sum",
+    "cytosolic_candidates": 63,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1681_C2_sum",
+    "cytosolic_candidates": 69,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1682_C2_sum",
+    "cytosolic_candidates": 73,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1683_C2_sum",
+    "cytosolic_candidates": 89,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1684_C2_sum",
+    "cytosolic_candidates": 115,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1685_C2_sum",
+    "cytosolic_candidates": 68,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1686_C2_sum",
+    "cytosolic_candidates": 31,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1687_C2_sum",
+    "cytosolic_candidates": 91,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1688_C2_sum",
+    "cytosolic_candidates": 68,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1689_C2_sum",
+    "cytosolic_candidates": 34,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1690_C2_sum",
+    "cytosolic_candidates": 54,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1691_C2_sum",
+    "cytosolic_candidates": 68,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1692_C2_sum",
+    "cytosolic_candidates": 50,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1693_C2_sum",
+    "cytosolic_candidates": 28,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1694_C2_sum",
+    "cytosolic_candidates": 35,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1695_C2_sum",
+    "cytosolic_candidates": 130,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1696_C2_sum",
+    "cytosolic_candidates": 91,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1697_C2_sum",
+    "cytosolic_candidates": 57,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1698_C2_sum",
+    "cytosolic_candidates": 116,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1699_C2_sum",
+    "cytosolic_candidates": 79,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1700_C2_sum",
+    "cytosolic_candidates": 85,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1701_C2_sum",
+    "cytosolic_candidates": 86,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  },
+  {
+    "source": "Experiment-1702_C2_sum",
+    "cytosolic_candidates": 108,
+    "pixel_tensor_match": true,
+    "original_coordinate_postprocessing_match": true
+  }
+]

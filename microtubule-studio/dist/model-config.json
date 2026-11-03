@@ -1,7 +1,12 @@
 {
-  "name": "Baseline YOLOv10n",
-  "url": "model.onnx",
-  "inputSize": 640,
-  "overlap": 160,
-  "classes": ["cytosolic", "centrosomal", "cell"]
+  "name": "Refined YOLOv10n 1024",
+  "url": "refined1024.onnx",
+  "mode": "whole_image",
+  "inputSize": 1024,
+  "overlap": 0,
+  "classes": [
+    "cytosolic",
+    "centrosomal",
+    "cell"
+  ]
 }

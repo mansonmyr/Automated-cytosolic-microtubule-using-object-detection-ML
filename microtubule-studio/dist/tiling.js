@@ -23,4 +23,36 @@ function suppressOverlaps(items, threshold = 0.5) {
   }
   return kept;
 }
-if (typeof module !== 'undefined') module.exports = {tilePositions, intersectionOverUnion, suppressOverlaps};
+// Letterbox the whole source. Round the interpolated RGB byte before normalization,
+// matching the native uint8 resize for 2048 x 2048 TIFFs at input size 1024.
+function wholeImageInput(rgba, width, height, size) {
+  const scale = Math.min(size/width, size/height);
+  const w = Math.max(1, Math.round(width*scale)), h = Math.max(1, Math.round(height*scale));
+  const left = Math.floor((size-w)/2), top = Math.floor((size-h)/2), plane = size*size;
+  const input = new Float32Array(3*plane);
+  if (w !== size || h !== size) input.fill(114/255);
+  for (let y=0; y<h; y++) {
+    const sy=Math.max(0,Math.min(height-1,(y+.5)*height/h-.5)), y0=Math.floor(sy), y1=Math.min(y0+1,height-1);
+    const fy=sy-y0;
+    for (let x=0; x<w; x++) {
+      const sx=Math.max(0,Math.min(width-1,(x+.5)*width/w-.5)), x0=Math.floor(sx), x1=Math.min(x0+1,width-1);
+      const fx=sx-x0, dst=(y+top)*size+x+left;
+      for (let c=0; c<3; c++) {
+        if (width===2*w && height===2*h) {
+          // This OpenCV uint8 half-size path rounds vertical pairs, then horizontal pairs.
+          const v0=(rgba[4*(y0*width+x0)+c]+rgba[4*(y1*width+x0)+c]+1)>>1;
+          const v1=(rgba[4*(y0*width+x1)+c]+rgba[4*(y1*width+x1)+c]+1)>>1;
+          input[c*plane+dst]=((v0+v1+1)>>1)/255;
+          continue;
+        }
+        const a=rgba[4*(y0*width+x0)+c]*(1-fx)+rgba[4*(y0*width+x1)+c]*fx;
+        const b=rgba[4*(y1*width+x0)+c]*(1-fx)+rgba[4*(y1*width+x1)+c]*fx;
+        input[c*plane+dst]=Math.round(a*(1-fy)+b*fy)/255;
+      }
+    }
+  }
+  return {input, mapBox: box => box.map((v,i) => i%2
+    ? Math.min(height,Math.max(0,(v-top)*height/h))
+    : Math.min(width,Math.max(0,(v-left)*width/w)))};
+}
+if (typeof module !== 'undefined') module.exports = {tilePositions, intersectionOverUnion, suppressOverlaps, wholeImageInput};

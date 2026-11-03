@@ -1,0 +1,29 @@
+{
+  "selection": "Lowest development per-cell MAE; RMSE as tie-breaker. This is model selection on reused development images, not an independent test.",
+  "calibration": "20 training-side sources. For each policy cap unmatched owned predictions at 0.1 per annotated calibration cell, using a three-decimal threshold.",
+  "candidates": "Four single full-label checkpoints with and without cyto NMS at IoU >0.5, and either 2048 checkpoint combined with refined1024 using the same NMS.",
+  "counting": "Count reliably owned predictions using supplied polygons in all 135 reference-resolved development cells.",
+  "ROC": "Annotated cytosolic regions versus annotated nonoverlapping-patch centrosomal controls. Region score = largest retained cyto proposal score at box IoU >=0.5, else 0. Ties receive half credit. Not a field-wide detector ROC.",
+  "weights": {
+    "baseline640": {
+      "path": "/Users/kaihong/Downloads/cytosolic microtubule_github/results/runs/detect/train/weights/best.pt",
+      "sha256": "9e1c475e6b900993eafa4e5706638acb4199b50ac237fc31db3f4c410940d571",
+      "size": 640
+    },
+    "refined1024": {
+      "path": "/Users/kaihong/Downloads/cytosolic microtubule_github/results/runs/detect/runs/yolov10n_refined/weights/best.pt",
+      "sha256": "8a4d977ad80a17bd5d61353154205fb2f2df045b40e00e60c77418292434d76f",
+      "size": 1024
+    },
+    "native2048": {
+      "path": "/Users/kaihong/Downloads/cytosolic microtubule_github/microtubule-studio/training_runs/native2048/weights/best.pt",
+      "sha256": "4e3c24a08d91afbc45ffbed098a5753eff28a9bd45329b010f560709c95602db",
+      "size": 2048
+    },
+    "fine_tuned2048": {
+      "path": "/Users/kaihong/Downloads/cytosolic microtubule_github/microtubule-studio/training_runs/refined_to2048/weights/best.pt",
+      "sha256": "be9c24b08d6eab22fae734c2deee95b888ccbc1ed36dd05ad9da2d360be689dc",
+      "size": 2048
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "image_size": [
+    2048,
+    2048
+  ],
+  "resized": false,
+  "tiled": false,
+  "class_names": {
+    "0": "cytosolic",
+    "1": "centrosomal",
+    "2": "cell"
+  },
+  "class_counts": {
+    "train": {
+      "2": 258,
+      "0": 1484,
+      "1": 290
+    },
+    "val": {
+      "2": 166,
+      "1": 198,
+      "0": 1970
+    }
+  },
+  "images_per_split": {
+    "train": 80,
+    "val": 25
+  },
+  "clipped_boundary_boxes": [
+    {
+      "image": "Experiment-1671_C2_sum.tif",
+      "shape": 10,
+      "original": [
+        1122.5294117647059,
+        -3.552713678800501e-15,
+        2037.235294117647,
+        643.1176470588235
+      ],
+      "clipped": [
+        1122.5294117647059,
+        0.0,
+        2037.235294117647,
+        643.1176470588235
+      ]
+    },
+    {
+      "image": "Experiment-1682_C2_sum.tif",
+      "shape": 3,
+      "original": [
+        357.82352941176464,
+        -3.552713678800501e-15,
+        1190.1764705882351,
+        669.5882352941177
+      ],
+      "clipped": [
+        357.82352941176464,
+        0.0,
+        1190.1764705882351,
+        669.5882352941177
+      ]
+    },
+    {
+      "image": "Experiment-1695_C2_sum.tif",
+      "shape": 2,
+      "original": [
+        -8.881784197001252e-16,
+        622.5294117647059,
+        625.470588235294,
+        1201.9411764705883
+      ],
+      "clipped": [
+        0.0,
+        622.5294117647059,
+        625.470588235294,
+        1201.9411764705883
+      ]
+    },
+    {
+      "image": "Experiment-1698_C2_sum.tif",
+      "shape": 5,
+      "original": [
+        872.5294117647057,
+        -1.7763568394002505e-15,
+        1463.705882352941,
+        734.2941176470588
+      ],
+      "clipped": [
+        872.5294117647057,
+        0.0,
+        1463.705882352941,
+        734.2941176470588
+      ]
+    }
+  ],
+  "pixel_duplicates": 0,
+  "notes": [
+    "RGB PNG pixels exactly match the decoded TIFF palette colors.",
+    "Cell polygons are converted to bounding boxes, not segmentation masks.",
+    "Existing splits retained; experiment-level independence is unknown.",
+    "Validation images were previously used for model development."
+  ]
+}

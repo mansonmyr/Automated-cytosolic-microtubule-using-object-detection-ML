@@ -1,0 +1,20 @@
+{
+  "method": "refined1024_nms",
+  "threshold": 0.174,
+  "n_cells": 135,
+  "count_MAE": 3.066666666666667,
+  "count_RMSE": 5.323602233520151,
+  "count_bias": -2.2666666666666666,
+  "precision": 0.5590094836670179,
+  "recall": 0.5385786802030457,
+  "f1": 0.5486039296794208,
+  "faint_recall": 0.5450310559006211,
+  "AP50": 0.4462546929101576,
+  "restricted_object_ROC_AUC": 0.8567861354663385,
+  "ROC_cytosolic": 1970,
+  "ROC_centrosomal": 198,
+  "matched": 1061,
+  "unmatched": 837,
+  "missed": 909,
+  "unmatched_owned_per_cell": 2.2590361445783134
+}

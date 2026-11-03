@@ -1,0 +1,21 @@
+{
+  "file": "refined1024.onnx",
+  "bytes": 9565211,
+  "sha256": "4f3f06f514a87daed9fc276bb1f7d678d044086661acabc278be00b0de0ea209",
+  "input": [
+    1,
+    3,
+    1024,
+    1024
+  ],
+  "classes": [
+    "cytosolic",
+    "centrosomal",
+    "cell"
+  ],
+  "confidence": 0.174,
+  "overlap_suppression_iou": 0.5,
+  "development_count_MAE": 3.066666666666667,
+  "development_count_RMSE": 5.323602233520151,
+  "interpretation": "Development-source comparison, using supplied cell polygons. Viewer counts are image-level candidates."
+}

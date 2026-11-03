@@ -1,0 +1,13 @@
+{
+  "n_cells": 135,
+  "reference_sum": 1265,
+  "predicted_sum": 959,
+  "absolute_error_sum": 414,
+  "squared_error_sum": 3826,
+  "signed_error_sum": -306,
+  "median_absolute_error": 2,
+  "exact_count_cells": 19,
+  "within_one_cells": 54,
+  "within_five_cells": 120,
+  "max_absolute_error": 33
+}

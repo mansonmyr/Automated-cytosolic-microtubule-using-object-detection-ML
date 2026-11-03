@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {ReviewStore, imagePoint, normalizedBox, hitTest} = require('../dist/review.js');
+const {ReviewStore, imagePoint, normalizedBox, hitTest, validateReview} = require('../dist/review.js');
 const {tilePositions, suppressOverlaps} = require('../dist/tiling.js');
 
 test('a display rectangle maps back to native image pixels after zoom or pan', () => {
@@ -46,4 +46,35 @@ test('both supported input sizes cover the original image without resizing', () 
   assert.throws(() => tilePositions(2048,640,640));
   const boxes=[{id:0,score:0.9,box:[0,0,10,10]},{id:0,score:0.7,box:[0,0,10,10]},{id:1,score:0.8,box:[0,0,10,10]}];
   assert.equal(suppressOverlaps(boxes).length,2);
+});
+
+function savedReview() {
+  const store=new ReviewStore();
+  store.reset([{id:0,score:0.8,box:[10,20,30,40]},{id:2,score:0.2,box:[0,0,100,100]}]);
+  store.add(1,[50,50],[75,75],2048,2048);
+  store.selected='model-1';store.removeSelected();
+  return {schema_version:2,source_file_sha256:'a'.repeat(64),image_width:2048,image_height:2048,confidence_threshold:0.25,
+    model:{name:'Baseline',url:'model.onnx',inputSize:640,overlap:160,classes:['cytosolic','centrosomal','cell']},...store.snapshot(0.25)};
+}
+test('a saved review restores deletions and manual boxes with a fresh undo history', () => {
+  const review=savedReview(),state=validateReview(review,2048,2048,'a'.repeat(64)),store=new ReviewStore();
+  store.loadReview(state);
+  assert.equal(store.items.length,2);assert.equal(store.original.length,2);assert.equal(store.history.length,0);
+  assert.equal(store.visible(0.25).length,1);assert.equal(store.snapshot(0.25).removed_predictions[0].uid,'model-1');
+  store.add(0,[200,200],[230,230],2048,2048);assert.equal(store.selected,'manual-2');
+  store.undo();assert.equal(store.items.length,2);
+});
+test('imports reject image mismatches and malformed provenance', () => {
+  assert.throws(()=>validateReview(savedReview(),2048,2048,'b'.repeat(64)),/different image file/);
+  assert.throws(()=>validateReview(savedReview(),1024,1024,'a'.repeat(64)),/dimensions/);
+  const duplicate=savedReview();duplicate.all_detections.push(duplicate.all_detections[0]);
+  assert.throws(()=>validateReview(duplicate,2048,2048,'a'.repeat(64)),/provenance/);
+  const invalid=savedReview();invalid.all_detections[0].box[0]=-1;
+  assert.throws(()=>validateReview(invalid,2048,2048,'a'.repeat(64)),/coordinates/);
+  const changed=savedReview();changed.all_detections[0].score=0.9;
+  assert.throws(()=>validateReview(changed,2048,2048,'a'.repeat(64)),/disagrees/);
+  const manual=savedReview();manual.all_detections.find(d=>d.origin==='manual').score=1;
+  assert.throws(()=>validateReview(manual,2048,2048,'a'.repeat(64)),/provenance/);
+  const threshold=savedReview();threshold.confidence_threshold=0.1234;
+  assert.throws(()=>validateReview(threshold,2048,2048,'a'.repeat(64)),/threshold/);
 });

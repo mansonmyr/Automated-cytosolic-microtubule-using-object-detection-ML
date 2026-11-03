@@ -1,0 +1,17 @@
+[build]
+  command = "node microtubule-studio/scripts/check-deployment.cjs"
+  publish = "microtubule-studio/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/model-config.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/refined1024.onnx"
+  [headers.values]
+    Content-Type = "application/octet-stream"
+    Cache-Control = "public, max-age=0, must-revalidate"

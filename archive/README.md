@@ -1,7 +1,5 @@
-# Archive
+# Previous repository release
 
-Archived on 3 November 2026 from commit `c9a488257d73b602f2d174fd51348cb9b1771698`.
+`legacy-before-1024-release/` preserves the complete repository tree from main commit `f5a23adc00df8519615a1cddd2208e668355aa5e`, immediately before the selected Refined1024 release. The snapshot includes the earlier application and original standalone scripts, together with their existing license. GitHub stores this snapshot by reusing that commit's tree; archived file contents are unchanged.
 
-`legacy-scripts/` contains the original standalone Gradio prototype and LabelMe conversion script. It also contains the earlier YOLO training script. Each file retains its original name and contents.
-
-The browser application remains at [`../microtubule-studio/`](../microtubule-studio/).
+The current application is in [`../microtubule-studio/dist/`](../microtubule-studio/dist/). Hosting configurations publish only that active application. Files in this archive are historical materials.

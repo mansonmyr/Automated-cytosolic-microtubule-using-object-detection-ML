@@ -26,6 +26,53 @@
     return hits[0]?.uid ?? null;
   }
 
+  function validateReview(review, width, height, fileHash) {
+    if (!review || review.schema_version !== 2) throw Error('Only version 2 review files support resuming. Older JSON files remain audit exports.');
+    if (review.image_width !== width || review.image_height !== height) throw Error('The review has different image dimensions.');
+    if (typeof fileHash !== 'string' || !/^[a-f0-9]{64}$/.test(fileHash)
+      || review.source_file_sha256 !== fileHash) throw Error('This review belongs to a different image file. Open its original image first.');
+    if (!Number.isFinite(review.confidence_threshold) || review.confidence_threshold < 0.05 || review.confidence_threshold > 0.95
+      || Math.abs(review.confidence_threshold*1000-Math.round(review.confidence_threshold*1000)) > 1e-6) {
+      throw Error('The saved confidence threshold is invalid.');
+    }
+    function cleanItems(items, originals = false) {
+      if (!Array.isArray(items) || items.length > 50000) throw Error('The saved boxes are invalid or exceed the supported limit.');
+      const ids = new Set();
+      return items.map(d => {
+        if (!d || !['model','manual'].includes(d.origin) || !Number.isInteger(d.id) || d.id < 0 || d.id > 2
+          || typeof d.uid !== 'string' || !/^(model|manual)-[1-9]\d{0,8}$/.test(d.uid)
+          || !d.uid.startsWith(d.origin+'-') || ids.has(d.uid)
+          || (originals && d.origin !== 'model') || !Array.isArray(d.box) || d.box.length !== 4
+          || !d.box.every(Number.isFinite) || d.box[0] < 0 || d.box[1] < 0 || d.box[2] > width || d.box[3] > height
+          || d.box[2] <= d.box[0] || d.box[3] <= d.box[1]
+          || (d.origin === 'manual' ? d.score !== null : !Number.isFinite(d.score) || d.score < 0.05 || d.score > 1)) {
+          throw Error('A saved box has invalid coordinates, class or provenance.');
+        }
+        ids.add(d.uid);
+        return {id:d.id, uid:d.uid, box:[...d.box], score:d.score, origin:d.origin};
+      });
+    }
+    const original = cleanItems(review.original_predictions, true), items = cleanItems(review.all_detections);
+    const originalById = new Map(original.map(d => [d.uid,d]));
+    for (const item of items.filter(d => d.origin === 'model')) {
+      const previous = originalById.get(item.uid);
+      if (!previous || previous.id !== item.id || previous.score !== item.score
+        || !previous.box.every((v,i) => v === item.box[i])) throw Error('A retained prediction disagrees with the original prediction record.');
+    }
+    let model = null;
+    if (review.model !== null) {
+      const m = review.model;
+      if (!m || typeof m.name !== 'string' || m.name.length > 200 || typeof m.url !== 'string' || m.url.length > 2000
+        || !Number.isInteger(m.inputSize) || m.inputSize < 32 || m.inputSize > 4096 || m.inputSize%32
+        || !Number.isInteger(m.overlap) || m.overlap < 0 || m.overlap >= m.inputSize
+        || JSON.stringify(m.classes) !== JSON.stringify(names)) throw Error('The saved model description is invalid.');
+      // Provenance only. Import never downloads or runs the model named in a review.
+      model = {name:m.name,url:m.url,inputSize:m.inputSize,overlap:m.overlap,classes:[...names],...(m.mode === 'whole_image' ? {mode:m.mode} : {})};
+    }
+    if (original.length && !model) throw Error('The original predictions have no model description.');
+    return {items,original,model,cutoff:review.confidence_threshold};
+  }
+
   class ReviewStore {
     constructor() { this.reset(); }
     reset(predictions = []) {
@@ -63,6 +110,13 @@
       this.selected = previous.selected;
       return true;
     }
+    loadReview(validated) {
+      this.items = clone(validated.items);
+      this.original = clone(validated.original);
+      this.history = [];
+      this.selected = null;
+      this.nextManual = this.items.reduce((max,d) => d.origin === 'manual' ? Math.max(max,Number(d.uid.split('-')[1])+1) : max,1);
+    }
     get hasCorrections() {
       return this.items.some(d => d.origin === 'manual')
         || this.items.filter(d => d.origin === 'model').length !== this.original.length;
@@ -86,7 +140,7 @@
     }
   }
 
-  const api = {ReviewStore, imagePoint, normalizedBox, hitTest, names};
+  const api = {ReviewStore, imagePoint, normalizedBox, hitTest, validateReview, names};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ReviewTools = api;
 })(globalThis);

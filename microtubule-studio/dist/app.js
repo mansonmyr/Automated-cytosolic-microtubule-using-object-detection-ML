@@ -1,20 +1,23 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const {ReviewStore, imagePoint, hitTest, normalizedBox, names} = ReviewTools;
-const colors = ['#89e8b1', '#f7bf72', '#8fbcff'];
+const {ReviewStore, imagePoint, hitTest, normalizedBox, validateReview, names} = ReviewTools;
+const colors = ['#ff85c8', '#ffffff', '#93aaff'];
 const store = new ReviewStore();
 let source = null, fileName = 'image', originalFileName = '', loadVersion = 0;
-let session = null, modelConfig = null, busy = false, loading = false, analysed = false;
+let session = null, modelConfig = null, reviewModel = null, imageHash = null, busy = false, loading = false, importing = false, analysed = false;
 let zoom = 1, tool = 'pan', gesture = null, draft = null;
+const PAGE_SIZE = 8;
+let listPage = 0, renderedListKey = '';
 const cutoff = () => Number($('confidence').value);
 const visible = () => store.visible(cutoff());
 const status = message => { $('status').textContent = message; };
 
 function updateControls() {
-  const locked = busy || loading || !source;
+  const locked = busy || loading || importing || !source;
   for (const id of ['run', 'confidence', 'tool-pan', 'tool-select', 'tool-draw', 'box-class',
     'zoom-out', 'zoom-in', 'zoom-fit', 'zoom-native', 'show-labels']) $(id).disabled = locked;
-  $('file').disabled = busy;
+  $('file').disabled = busy || importing;
+  $('load-review').disabled = locked;
   const exportable = !locked && (analysed || store.items.length > 0);
   for (const id of ['save', 'csv', 'json']) $(id).disabled = !exportable;
   $('delete-box').disabled = locked || !store.selected;
@@ -28,7 +31,62 @@ function updateControls() {
   $('total').textContent = items.length;
   for (let id = 0; id < 3; id++) $(['cyto', 'centro', 'cell'][id]).textContent = items.filter(d => d.id === id).length;
   $('manual-count').textContent = items.filter(d => d.origin === 'manual').length;
+  $('run').textContent = busy ? 'Analysing…' : 'Run detection';
+  $('inference-progress').hidden = !busy;
+  const working = busy || loading || importing;
+  $('workspace-state').dataset.state = working ? 'busy' : store.hasCorrections ? 'corrected' : 'ready';
+  $('workspace-state').textContent = loading ? 'Opening image' : importing ? 'Restoring review' : busy ? 'Analysing image'
+    : !source ? 'No image loaded' : store.hasCorrections ? 'Corrections added' : analysed ? 'Ready to review' : 'Image ready';
+  renderDetectionList(items,locked);
 }
+
+function renderDetectionList(items, locked) {
+  const pages = Math.max(1,Math.ceil(items.length/PAGE_SIZE));
+  listPage = Math.max(0,Math.min(listPage,pages-1));
+  const rows = items.slice(listPage*PAGE_SIZE,(listPage+1)*PAGE_SIZE);
+  const key = JSON.stringify([listPage,locked,!!source,analysed,rows.map(d => [d.uid,d.id,d.score,d.origin])]);
+  const list = $('detection-list');
+  if (key !== renderedListKey) {
+    list.replaceChildren();
+    if (!rows.length) {
+      const empty = document.createElement('p'); empty.className = 'list-empty';
+      empty.textContent = !source ? 'Boxes will appear here after detection or manual annotation.'
+        : analysed ? 'No visible boxes at this confidence threshold.' : 'Run detection or draw a box to start.';
+      list.append(empty);
+    }
+    for (const d of rows) {
+      const button = document.createElement('button');
+      button.className = 'detection-row'; button.dataset.uid = d.uid; button.disabled = locked;
+      const label = document.createElement('span'); label.className = 'row-name';
+      label.textContent = `${names[d.id]} #${d.uid.split('-')[1]}`;
+      const score = document.createElement('span'); score.className = 'row-score';
+      score.textContent = d.origin === 'manual' ? 'manual' : `${Math.round(d.score*100)}%`;
+      button.append(label,score); button.onclick = () => locateDetection(d.uid); list.append(button);
+    }
+    renderedListKey = key;
+  }
+  for (const button of list.children) if (button.dataset.uid) button.setAttribute('aria-pressed',String(button.dataset.uid === store.selected));
+  $('list-prev').disabled = locked || !items.length || listPage === 0;
+  $('list-next').disabled = locked || !items.length || listPage === pages-1;
+  $('list-page').textContent = items.length ? `${listPage+1} / ${pages} · ${items.length} boxes` : '0 boxes';
+}
+
+function locateDetection(uid) {
+  if (!source || busy || loading || importing) return;
+  const detection = visible().find(d => d.uid === uid);
+  if (!detection) return;
+  store.selected = uid; setTool('select');
+  const box = detection.box, viewer = $('viewer');
+  const closeUp = Math.min(2,(viewer.clientWidth-48)/(box[2]-box[0]),(viewer.clientHeight-48)/(box[3]-box[1]));
+  zoomTo(Math.max(zoom,closeUp));
+  const bounds = viewer.getBoundingClientRect(), rect = $('canvas').getBoundingClientRect();
+  viewer.scrollLeft += rect.left+(box[0]+box[2])/2*zoom-(bounds.left+viewer.clientWidth/2);
+  viewer.scrollTop += rect.top+(box[1]+box[3])/2*zoom-(bounds.top+viewer.clientHeight/2);
+  status(`Selected ${names[detection.id]} box. Delete selected removes it; Undo restores the last correction.`);
+}
+
+$('list-prev').onclick = () => { if (listPage > 0) { listPage--; updateControls(); } };
+$('list-next').onclick = () => { if ((listPage+1)*PAGE_SIZE < visible().length) { listPage++; updateControls(); } };
 
 function paint(canvas, exporting = false) {
   if (!source) return;
@@ -58,7 +116,7 @@ function paint(canvas, exporting = false) {
       const left = Math.max(0, Math.min(x1, canvas.width-width));
       const top = Math.max(0, y1-height);
       ctx.fillStyle = colors[d.id]; ctx.fillRect(left, top, width, height);
-      ctx.fillStyle = '#0b1b16'; ctx.fillText(text, left+unit*2, top+height-unit*2);
+      ctx.fillStyle = '#07113c'; ctx.fillText(text, left+unit*2, top+height-unit*2);
     }
   }
   if (!exporting && draft) {
@@ -82,7 +140,7 @@ function sizeCanvas() {
 }
 
 function zoomTo(value, anchor) {
-  if (!source || busy || loading) return;
+  if (!source || busy || loading || importing) return;
   const viewer = $('viewer'), bounds = viewer.getBoundingClientRect();
   const at = anchor || [bounds.left+viewer.clientWidth/2, bounds.top+viewer.clientHeight/2];
   const point = imagePoint(at[0], at[1], $('canvas').getBoundingClientRect(), source.width, source.height);
@@ -118,7 +176,7 @@ function cancelGesture() {
 }
 
 $('canvas').addEventListener('pointerdown', event => {
-  if (!source || busy || loading || event.button !== 0) return;
+  if (!source || busy || loading || importing || event.button !== 0) return;
   event.preventDefault(); $('viewer').focus({preventScroll:true});
   const point = imagePoint(event.clientX,event.clientY,$('canvas').getBoundingClientRect(),source.width,source.height);
   if (tool === 'select') { store.selected = hitTest(point,visible()); render(); return; }
@@ -144,6 +202,7 @@ $('canvas').addEventListener('pointerup', event => {
     const end = imagePoint(event.clientX,event.clientY,$('canvas').getBoundingClientRect(),source.width,source.height);
     if (Math.hypot(event.clientX-gesture.start[0],event.clientY-gesture.start[1]) >= 3
       && store.add(Number($('box-class').value),draft.start,end,source.width,source.height)) {
+      listPage = Math.floor((visible().length-1)/PAGE_SIZE);
       status('Manual box added. Its coordinates are saved in original image pixels.');
     }
   }
@@ -153,12 +212,12 @@ for (const eventName of ['pointercancel', 'lostpointercapture']) $('canvas').add
   gesture = null; draft = null; $('viewer').classList.remove('dragging'); render();
 });
 $('viewer').addEventListener('wheel', event => {
-  if ((event.ctrlKey || event.metaKey) && source && !busy && !loading) {
+  if ((event.ctrlKey || event.metaKey) && source && !busy && !loading && !importing) {
     event.preventDefault(); zoomTo(zoom*Math.exp(-event.deltaY*0.004),[event.clientX,event.clientY]);
   }
 }, {passive:false});
 $('viewer').addEventListener('keydown', event => {
-  if (!source || busy || loading) return;
+  if (!source || busy || loading || importing) return;
   if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); removeBox(); }
   else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); undo(); }
   else if (event.key === 'Escape') { cancelGesture(); store.selected = null; render(); }
@@ -173,9 +232,10 @@ function removeBox() { if (store.removeSelected()) { status('Box removed. Undo r
 function undo() { if (store.undo()) { status('Last correction undone.'); render(); } }
 $('delete-box').onclick = removeBox;
 $('undo').onclick = undo;
-$('restore').onclick = () => { if (store.restore()) { status('Corrections reset to the last model predictions. Undo restores your corrections.'); render(); } };
+$('restore').onclick = () => { if (store.restore()) { listPage = 0; status('Corrections reset to the last model predictions. Undo restores your corrections.'); render(); } };
 $('confidence').oninput = event => {
-  $('threshold').textContent = Number(event.target.value).toFixed(2);
+  $('threshold').textContent = Number(event.target.value).toFixed(3);
+  listPage = 0;
   if (!visible().some(d => d.uid === store.selected)) store.selected = null;
   if (source) { render(); status('Confidence filter updated. Manual boxes remain visible.'); }
 };
@@ -187,7 +247,7 @@ $('file').onchange = async event => {
     event.target.value = ''; return;
   }
   const version = ++loadVersion;
-  source = null; store.reset(); analysed = false; loading = true; cancelGesture();
+  source = null; imageHash = null; reviewModel = null; store.reset(); listPage = 0; analysed = false; loading = true; cancelGesture();
   $('stage').style.display = 'none'; $('empty').style.display = 'block';
   $('image-info').textContent = 'Opening image…'; updateControls(); status('Opening image…');
   try {
@@ -206,8 +266,11 @@ $('file').onchange = async event => {
       ctx.drawImage(bitmap,0,0); bitmap.close();
     }
     if (!canvas.width || !canvas.height) throw Error('Image dimensions are invalid.');
+    if (!globalThis.crypto?.subtle) throw Error('Use HTTPS or localhost to enable image fingerprint checks.');
+    const digest = await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
+    const hash = Array.from(new Uint8Array(digest),byte => byte.toString(16).padStart(2,'0')).join('');
     if (version !== loadVersion) return;
-    source = canvas; originalFileName = file.name; fileName = file.name.replace(/\.[^.]+$/,'');
+    source = canvas; imageHash = hash; originalFileName = file.name; fileName = file.name.replace(/\.[^.]+$/,'');
     $('canvas').width = canvas.width; $('canvas').height = canvas.height;
     $('stage').style.display = 'block'; $('empty').style.display = 'none';
     $('image-info').textContent = `${file.name} · ${canvas.width} × ${canvas.height} px`;
@@ -234,27 +297,39 @@ async function loadModel() {
 }
 
 $('run').onclick = async () => {
-  if (!source || busy || loading) return;
+  if (!source || busy || loading || importing) return;
   if (store.hasCorrections && !window.confirm('Running detection will replace your corrections. Download your review first if you need it. Continue?')) return;
-  busy = true; analysed = false; cancelGesture(); store.reset(); render();
+  busy = true; analysed = false; reviewModel = null; cancelGesture(); store.reset(); listPage = 0;
+  $('inference-progress').removeAttribute('value'); render();
   try {
     if (typeof ort === 'undefined') throw Error('Inference library could not load. Check your connection.');
     status('Loading model…'); await new Promise(resolve => setTimeout(resolve,30));
     ort.env.wasm.numThreads = 1;
     await loadModel();
     const size = modelConfig.inputSize, width = source.width, height = source.height;
-    const xs = tilePositions(width,size,modelConfig.overlap), ys = tilePositions(height,size,modelConfig.overlap), all = [];
+    const whole = modelConfig.mode === 'whole_image';
+    const xs = whole ? [0] : tilePositions(width,size,modelConfig.overlap);
+    const ys = whole ? [0] : tilePositions(height,size,modelConfig.overlap), all = [];
     const tile = document.createElement('canvas'); tile.width = tile.height = size;
     const ctx = tile.getContext('2d',{willReadFrequently:true});
     let current = 0; const total = xs.length*ys.length;
     for (const y of ys) for (const x of xs) {
-      status(`Analysing tile ${++current} of ${total}…`); await new Promise(resolve => setTimeout(resolve,0));
+      current++;
+      status(whole ? 'Analysing whole image…' : `Analysing tile ${current} of ${total}…`); await new Promise(resolve => setTimeout(resolve,0));
       const tw = Math.min(size,width-x), th = Math.min(size,height-y);
-      ctx.fillStyle = 'rgb(114,114,114)'; ctx.fillRect(0,0,size,size);
-      ctx.drawImage(source,x,y,tw,th,0,0,tw,th);
-      const rgba = ctx.getImageData(0,0,size,size).data, input = new Float32Array(3*size*size);
-      for (let i = 0; i < size*size; i++) {
-        input[i] = rgba[4*i]/255; input[size*size+i] = rgba[4*i+1]/255; input[2*size*size+i] = rgba[4*i+2]/255;
+      let input, wholeInput;
+      if (whole) {
+        const rgba = source.getContext('2d').getImageData(0,0,width,height).data;
+        wholeInput = wholeImageInput(rgba,width,height,size);
+        input = wholeInput.input;
+      } else {
+        ctx.fillStyle = 'rgb(114,114,114)'; ctx.fillRect(0,0,size,size);
+        ctx.drawImage(source,x,y,tw,th,0,0,tw,th);
+        const rgba = ctx.getImageData(0,0,size,size).data;
+        input = new Float32Array(3*size*size);
+        for (let i=0; i<size*size; i++) {
+          input[i]=rgba[4*i]/255; input[size*size+i]=rgba[4*i+1]/255; input[2*size*size+i]=rgba[4*i+2]/255;
+        }
       }
       const tensor = new ort.Tensor('float32',input,[1,3,size,size]);
       let result;
@@ -265,13 +340,14 @@ $('run').onclick = async () => {
         for (let i = 0; i < out.data.length; i += 6) {
           const a = out.data, score = a[i+4], id = a[i+5];
           if (!Number.isFinite(score) || score < 0.05 || score > 1 || !Number.isInteger(id) || id < 0 || id > 2) continue;
-          const box = [Math.max(0,Math.min(tw,a[i]))+x,Math.max(0,Math.min(th,a[i+1]))+y,
+          const box = whole ? wholeInput.mapBox([a[i],a[i+1],a[i+2],a[i+3]]) : [Math.max(0,Math.min(tw,a[i]))+x,Math.max(0,Math.min(th,a[i+1]))+y,
             Math.max(0,Math.min(tw,a[i+2]))+x,Math.max(0,Math.min(th,a[i+3]))+y];
           if (box.every(Number.isFinite) && box[2]>box[0] && box[3]>box[1]) all.push({id,score,box});
         }
       } finally { tensor.dispose(); if (result) for (const out of Object.values(result)) out.dispose(); }
+      $('inference-progress').value = current/total*100;
     }
-    store.reset(suppressOverlaps(all)); analysed = true;
+    store.reset(suppressOverlaps(all)); analysed = true; reviewModel = {...modelConfig,classes:[...names]};
     setTool('select'); status(`Analysis complete: ${visible().length} visible candidate boxes. Select a box to delete it, or draw a missed region.`);
   } catch (error) { status(`Analysis failed: ${error.message}`); }
   finally { busy = false; render(); }
@@ -289,9 +365,29 @@ $('save').onclick = () => {
 };
 $('csv').onclick = () => download(new Blob([store.csv(cutoff())],{type:'text/csv;charset=utf-8'}),`${fileName}-detections.csv`);
 $('json').onclick = () => {
-  const review = {schema_version:1, file:originalFileName, image_width:source.width,image_height:source.height,
+  const review = {schema_version:2, file:originalFileName, source_file_sha256:imageHash, image_width:source.width,image_height:source.height,
     confidence_threshold:cutoff(), coordinate_system:'original image pixels, xyxy',
-    model:analysed ? modelConfig : null, ...store.snapshot(cutoff())};
+    model:analysed ? reviewModel : null, ...store.snapshot(cutoff())};
   download(new Blob([JSON.stringify(review,null,2)],{type:'application/json'}),`${fileName}-review.json`);
+};
+$('load-review').onclick = () => { $('review-file').value = ''; $('review-file').click(); };
+$('review-file').onchange = async event => {
+  const file = event.target.files[0];
+  if (!file || !source || busy || loading || importing) return;
+  importing = true; cancelGesture(); updateControls();
+  try {
+    if (file.size > 10*1024*1024) throw Error('Review files must be smaller than 10 MB.');
+    const review = JSON.parse(await file.text());
+    const validated = validateReview(review,source.width,source.height,imageHash);
+    if ((store.items.length || store.original.length) && !window.confirm('Loading this saved review replaces the current boxes and starts a new undo history. Continue?')) return;
+    store.loadReview(validated);
+    listPage = 0;
+    reviewModel = validated.model; analysed = reviewModel !== null;
+    $('confidence').value = String(validated.cutoff);
+    $('threshold').textContent = validated.cutoff.toFixed(3);
+    setTool('select');
+    status('Saved review restored. The original image fingerprint matches.');
+  } catch (error) { status(`Could not load review: ${error.message}`); }
+  finally { importing = false; event.target.value = ''; render(); }
 };
 updateControls();

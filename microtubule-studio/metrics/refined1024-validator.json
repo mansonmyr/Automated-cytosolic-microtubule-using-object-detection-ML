@@ -1,0 +1,32 @@
+{
+  "name": "refined_1024",
+  "weights": "/Users/kaihong/Downloads/cytosolic microtubule_github/results/runs/detect/runs/yolov10n_refined/weights/best.pt",
+  "input_size": 1024,
+  "metrics": {
+    "metrics/precision(B)": 0.5527217400912307,
+    "metrics/recall(B)": 0.5897391574162206,
+    "metrics/mAP50(B)": 0.5556193577327281,
+    "metrics/mAP50-95(B)": 0.25938686937767863,
+    "fitness": 0.25938686937767863
+  },
+  "per_class": {
+    "cytosolic": {
+      "precision": 0.53738204074123,
+      "recall": 0.467005076142132,
+      "mAP50": 0.47272144133210464,
+      "mAP50_95": 0.19177054040668307
+    },
+    "centrosomal": {
+      "precision": 0.638635884445145,
+      "recall": 0.803030303030303,
+      "mAP50": 0.7374109821809866,
+      "mAP50_95": 0.3738366591384651
+    },
+    "cell": {
+      "precision": 0.48214729508731724,
+      "recall": 0.49918209307622674,
+      "mAP50": 0.4567256496850932,
+      "mAP50_95": 0.21255340858788752
+    }
+  }
+}

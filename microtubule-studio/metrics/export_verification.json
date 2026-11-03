@@ -1,0 +1,145 @@
+{
+  "path": "evaluation/native_selection/browser/checkpoint.onnx",
+  "weights_sha256": "8a4d977ad80a17bd5d61353154205fb2f2df045b40e00e60c77418292434d76f",
+  "onnx_sha256": "4f3f06f514a87daed9fc276bb1f7d678d044086661acabc278be00b0de0ea209",
+  "input_shape": [
+    1,
+    3,
+    1024,
+    1024
+  ],
+  "mode": "whole_image",
+  "classes": [
+    "cytosolic",
+    "centrosomal",
+    "cell"
+  ],
+  "checks": [
+    {
+      "image": "Experiment-1678_C2_sum.png",
+      "detections": 292,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1679_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1680_C2_sum.png",
+      "detections": 288,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1681_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1682_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1683_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1684_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1685_C2_sum.png",
+      "detections": 290,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1686_C2_sum.png",
+      "detections": 196,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1687_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1688_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1689_C2_sum.png",
+      "detections": 254,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1690_C2_sum.png",
+      "detections": 293,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1691_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1692_C2_sum.png",
+      "detections": 284,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1693_C2_sum.png",
+      "detections": 146,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1694_C2_sum.png",
+      "detections": 209,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1695_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1696_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1697_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1698_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1699_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1700_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1701_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    },
+    {
+      "image": "Experiment-1702_C2_sum.png",
+      "detections": 300,
+      "passed": true
+    }
+  ],
+  "verification": "ONNX Runtime CPU parity. Browser WASM and original-coordinate mapping still require an integration check."
+}

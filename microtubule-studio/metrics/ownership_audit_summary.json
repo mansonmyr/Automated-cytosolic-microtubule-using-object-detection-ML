@@ -1,0 +1,48 @@
+{
+  "source_images": 105,
+  "cells": 424,
+  "cytosolic_annotations": 3454,
+  "ownership": {
+    "reliable": 3117,
+    "unowned": 277,
+    "ambiguous": 60
+  },
+  "ownership_by_split": {
+    "ambiguous": {
+      "heldout_development": 30,
+      "train": 30
+    },
+    "reliable": {
+      "heldout_development": 1794,
+      "train": 1323
+    },
+    "unowned": {
+      "heldout_development": 146,
+      "train": 131
+    }
+  },
+  "contrast_cutpoints_fit_only": [
+    2.8478498733456243,
+    4.721435316336167
+  ],
+  "contrast_definition": "(90th percentile within positive box - median local ring) / max(1, 1.4826*ring MAD); exclude all annotated objects plus a 2-pixel margin; restrict ring to reliable owner when available",
+  "fit_images": 60,
+  "calibration_images": 20,
+  "heldout_development_images": 25,
+  "ownership_rule": "unique centre-containing polygon; >=80% box coverage; second polygon <=10%; no nearest-cell assignment",
+  "ownership_resolved_cells": 361,
+  "invalid_cell_polygons": 1,
+  "intensity": {
+    "all_8bit_green_palette": true,
+    "mean_saturation_fraction": 1.2125287737165178e-06,
+    "diagnostic_patches": 800,
+    "median_lag1_correlation": 0.4810059744874654,
+    "fraction_normality_p_below_05": 0.38625
+  },
+  "limitations": [
+    "Original validation files were previously used for development; they are not an untouched independent test.",
+    "Reliable ownership is a conservative geometric assignment, not an independent cell-segmentation validation.",
+    "Unlabelled locations are not assumed to be biological negatives.",
+    "All supplied positive annotations are retained regardless of contrast or ownership."
+  ]
+}

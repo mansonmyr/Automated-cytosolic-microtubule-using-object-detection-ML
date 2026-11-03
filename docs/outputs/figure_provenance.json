@@ -1,0 +1,10 @@
+{
+  "restricted_ROC_AUC": 0.8567861354663385,
+  "AP50": 0.4462546929101576,
+  "inputs_sha256": {
+    "microtubule-studio/evaluation/native_selection/refined1024_native.csv": "1cc1070bd19315b651b1bf112f3352bbd3c4fa236270be3d862fe38de1833112",
+    "microtubule-studio/analysis_runs/per_cell_v1/cytosolic_ownership.csv": "89d3709a2f1ea303004c06c5458fc8ec9d57504b5516b6fb47a0bea4c42bd9b7",
+    "microtubule-studio/analysis_runs/per_cell_v1/annotated_centrosomal_controls.csv": "5d04f34e886c32c1c00228a9a1fb57692938f5005469ac277defe90662d53ce7"
+  },
+  "note": "Recomputed from cached development predictions; no new inference or independent testing."
+}

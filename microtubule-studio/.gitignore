@@ -11,3 +11,8 @@ evaluation/
 *.zip
 __pycache__/
 .DS_Store
+
+analysis_runs/
+
+# The selected, verified browser model is a deployment asset.
+!dist/refined1024.onnx
