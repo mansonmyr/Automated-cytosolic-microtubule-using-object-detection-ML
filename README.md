@@ -59,3 +59,15 @@ These tools were used to assist with debugging, workflow design, and implementat
 # Citation
 If you use this software, please cite it as: K.H.,Ooi.(2026).Automated-cytosolic-microtubule-using-object-detection-ML. version: 1.0.0. date-released: 2026-03-11.https://github.com/mansonmyr/Automated-cytosolic-microtubule-using-object-detection-ML
 
+
+# Archived scripts
+
+The original standalone scripts are preserved in [`archive/legacy-scripts/`](archive/legacy-scripts/). Their contents and filenames are unchanged.
+
+| Original file | Archived location |
+| --- | --- |
+| `gradio` | [Gradio prototype](archive/legacy-scripts/gradio) |
+| `json to yolo` | [LabelMe conversion script](archive/legacy-scripts/json%20to%20yolo) |
+| `yolo model` | [YOLO training script](archive/legacy-scripts/yolo%20model) |
+
+The browser application remains in [`microtubule-studio/`](microtubule-studio/).
