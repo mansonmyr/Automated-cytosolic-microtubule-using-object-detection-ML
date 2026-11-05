@@ -14,5 +14,6 @@ __pycache__/
 
 analysis_runs/
 
-# The selected, verified browser model is a deployment asset.
+# The selected, verified browser models are deployment assets.
 !dist/refined1024.onnx
+!dist/cell_segmentation.onnx

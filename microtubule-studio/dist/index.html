@@ -1,98 +1,225 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Detect and count cytosolic microtubules within each cell, with cell-ownership and faint-object review.">
-  <title>Per-cell Microtubule Analysis</title>
-  <link rel="stylesheet" href="app.css">
-</head>
-<body>
-  <div class="glass-scene" aria-hidden="true"><span class="ambient-orb orb-pink"></span><span class="ambient-orb orb-blue"></span><span class="ambient-orb orb-white"></span><span class="ambient-ring"></span></div>
-  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <symbol id="icon-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/><circle cx="12" cy="12" r="4"/><path d="M12 6v2m0 8v2m-6-6h2m8 0h2"/></symbol>
-    <symbol id="icon-filament" viewBox="0 0 24 24"><path d="M4 18c6 0 4-12 10-12h6M4 12c6 0 5 6 10 6h6M4 6h3m11 6h2"/><circle cx="5" cy="18" r="1"/></symbol>
-    <symbol id="icon-centre" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></symbol>
-    <symbol id="icon-cell" viewBox="0 0 24 24"><path d="M20 10c2 6-3 11-9 11S2 17 3 11 7 2 12 3s7 2 8 7Z"/><circle cx="11" cy="12" r="3"/></symbol>
-  </svg>
-  <header class="app-header">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-focus"/></svg></span><strong>Per-cell MT Analysis</strong></div>
-    <div class="header-meta"><span class="privacy"><span aria-hidden="true">●</span> Images stay in your browser</span><span class="badge">RESEARCH PROTOTYPE</span></div>
-  </header>
-  <main>
-    <div class="workspace-heading">
-      <div><div class="eyebrow">Per-cell detection and counting</div><h1>Cytosolic microtubule analysis</h1><p class="small">Cell ownership and faint-object performance are under validation. Current sidebar totals are image-level candidate counts.</p></div>
-      <span id="workspace-state" class="state-pill" role="status">No image loaded</span>
-    </div>
-    <div class="layout">
-      <section class="panel settings" aria-labelledby="settings-heading">
-        <div class="section-title"><span class="step">01</span><h2 id="settings-heading">Set up analysis</h2></div>
-        <div class="settings-section">
-          <label for="file">Microscopy image</label>
-          <div class="upload"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Open an image</strong><span class="small">Single-page TIFF, PNG or JPEG</span><input type="file" id="file" accept=".tif,.tiff,.png,.jpg,.jpeg"></div>
-          <button id="load-review" class="wide secondary" disabled>Resume saved review</button>
-          <input id="review-file" type="file" accept=".json,application/json" hidden>
-          <p class="small">Open the original image before loading its review JSON.</p>
-        </div>
-        <div class="settings-section">
-          <label class="range-label" for="confidence">Minimum confidence <strong id="threshold">0.174</strong></label>
-          <input id="confidence" type="range" min="0.05" max="0.95" step="0.001" value="0.174">
-          <div class="range-ends" aria-hidden="true"><span>More candidates</span><span>Higher confidence</span></div>
-          <button id="run" class="wide primary" disabled>Run detection</button>
-          <progress id="inference-progress" max="100" aria-label="Image analysis progress" hidden></progress>
-          <p id="status" class="status" role="status" aria-live="polite">Select an image to begin. You can also draw boxes manually.</p>
-        </div>
-        <div class="exports">
-          <h3>Save your work</h3>
-          <button id="json" class="wide secondary" disabled>Save review JSON <span aria-hidden="true">↓</span></button>
-          <button id="csv" class="wide secondary" disabled>Export detections CSV <span aria-hidden="true">↓</span></button>
-          <button id="save" class="wide secondary" disabled>Export annotated PNG <span aria-hidden="true">↓</span></button>
-          <p class="small">JSON lets you resume later. All coordinates use original image pixels.</p>
-        </div>
-        <details class="method-note"><summary>About these results</summary><p class="small">Review every candidate box. The model has not been independently validated. Counts do not measure filament length or fluorescence intensity.</p><p class="small">A manual box has no model confidence score. Raising the confidence threshold hides predictions without deleting them.</p></details>
-      </section>
-      <section id="review-panel" class="panel image-panel" aria-labelledby="review-heading">
-        <div class="review-header"><div class="section-title"><span class="step">02</span><h2 id="review-heading">Inspect image</h2></div><p id="image-info" class="small">No image selected</p></div>
-        <div class="toolbar" aria-label="Image review controls">
-          <div class="group tool-group" role="group" aria-label="Review tool">
-            <button id="tool-pan" aria-pressed="true" disabled>Pan</button>
-            <button id="tool-select" aria-pressed="false" disabled>Select</button>
-            <button id="tool-draw" aria-pressed="false" disabled>Draw box</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Per-cell MT Analysis</title>
+    <link rel="stylesheet" href="app.css?v=square-confidence-1" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <span class="eyebrow">MICROSCOPY WORKSPACE</span>
+        <h1>Per-cell MT Analysis</h1>
+      </div>
+      <span class="pill">Images stay in your browser</span>
+    </header>
+    <main>
+      <nav class="steps" aria-label="Analysis stages">
+        <button data-stage="1">01 <span>Detect cells</span></button
+        ><button data-stage="2">02 <span>Select full cells</span></button
+        ><button data-stage="3">03 <span>Preprocess</span></button
+        ><button data-stage="4">04 <span>Count per cell</span></button>
+      </nav>
+      <div class="layout">
+        <aside class="panel controls">
+          <section data-panel="1">
+            <h2>Find individual cells</h2>
+            <p>Open an image and generate editable cell outlines.</p>
+            <label class="upload"
+              >Open TIFF, PNG or JPEG<input
+                id="file"
+                type="file"
+                accept=".tif,.tiff,.png,.jpg,.jpeg" /></label
+            ><label for="cell-confidence"
+              >Cell foreground cutoff
+              <output id="cell-threshold">0.500</output></label
+            ><input
+              id="cell-confidence"
+              type="range"
+              min="0.2"
+              max="0.8"
+              step="0.01"
+              value="0.5"
+            /><label><input id="auto-exclude" type="checkbox" checked /> Exclude close matches to your rejected examples (experimental)</label><button id="auto-cells" class="primary" disabled>
+              Detect cells + microtubules</button
+            ><button id="manual-start" disabled>
+              Start with manual polygons
+            </button>
+            <p class="small">
+              Include complete cells, including complete cells touching the image border. Remove partial or half cells even when centrosomes are detected. Centrosome count alone does not determine completeness. Check
+              touching cells and faint boundaries.
+            </p>
+          </section>
+          <section data-panel="2" hidden>
+            <h2>Select complete cells</h2>
+            <p class="small">
+              The learned model matched 106 of 166 annotated development cells at
+              polygon IoU ≥ 0.5. Check completeness and the proposed boundaries before counting.
+            </p>
+            <p>
+              Delete every partial or half-cell proposal. Retain complete cells even if they touch the border or have no detected centrosome. Select a cell and drag its vertices. Add missed complete cells or replace
+              an outline with a drawn polygon.
+            </p>
+            <div class="button-row">
+              <button id="select-tool">Select / edit</button
+              ><button id="polygon-tool">Draw polygon</button>
+            </div>
+            <button id="finish-polygon" disabled>Finish polygon</button
+            ><button id="cancel-polygon" disabled>Cancel polygon</button
+            ><button id="replace-polygon" disabled>Redraw selected cell</button
+            ><button id="delete-cell" class="danger" disabled>
+              Delete selected cell</button
+            ><button id="undo-cell" disabled>Undo cell edit</button>
+            <div id="cell-list" class="list"></div>
+            <p id="cell-selection" class="small">Select a polygon.</p>
+            <button id="approve-cells" class="primary" disabled>
+              Confirm all retained cells are complete
+            </button>
+          </section>
+          <section data-panel="3" hidden>
+            <h2>Choose preprocessing</h2>
+            <label for="preprocessing">Counting input</label
+            ><select id="preprocessing">
+              <option value="original">
+                Original intensity · higher measured precision
+              </option>
+              <option value="flip-agreement">
+                Flip agreement · cutoff 0.075
+              </option>
+              <option value="percentile">
+                Normalize 0.5–99.5 percentiles · lower count MAE
+              </option>
+            </select>
+            <div class="method">
+              <p>
+                Original input measured 55.9% precision and count MAE 3.51.
+                Normalization measured 53.9% precision and MAE 3.11.
+              </p>
+              <p class="small">
+                Exploratory results used annotated cell boundaries on 25
+                development images and 166 cells. Choose the precision–count
+                trade-off for this image. Flip agreement runs a second pass and reduces scores for detections seen in only one view.
+              </p>
+            </div>
+            <label
+              ><input type="checkbox" id="show-original" /> View original
+              image</label
+            ><button id="to-count" class="primary">
+              Continue to per-cell counting
+            </button>
+          </section>
+          <section data-panel="4" hidden>
+            <h2>Count cytosolic objects</h2>
+            <label for="confidence"
+              >Cytosolic confidence <output id="threshold">0.174</output></label
+            ><input
+              id="confidence"
+              type="range"
+              min="0.05"
+              max="0.95"
+              step="0.001"
+              value="0.174"
+            /><div class="button-row"><button id="confidence-balanced">Balanced cutoff · 0.050</button><button id="confidence-precision">Higher precision · 0.174</button></div>
+            <p class="small">Model scores are not calibrated probabilities. On 20 validation images, cutoff 0.050 measured 43.8% precision / 44.2% recall; 0.174 measured 57.7% / 14.4%. These object metrics include all annotated cells. Check faint objects and false detections before export.</p><p id="confidence-live" class="small"></p><button id="run-count" class="primary">
+              Run per-cell counting
+            </button>
+            <div class="button-row">
+              <button id="box-select">Select box</button
+              ><button id="box-draw">Add cytosolic box</button>
+            </div>
+            <button id="delete-box" class="danger" disabled>
+              Delete selected box</button
+            ><button id="undo-box" disabled>Undo box correction</button
+            ><label for="assign-cell">Assign selected box</label
+            ><select id="assign-cell" disabled>
+              <option value="">Automatic ownership</option>
+            </select>
+            <p class="small">
+              Boundary candidates stay unresolved until assigned. Objects
+              outside all polygons are listed separately.
+            </p>
+            <label
+              ><input type="checkbox" id="reviewed" disabled /> I checked the
+              cytosolic detections</label
+            >
+            <div id="detection-list" class="list"></div>
+          </section>
+          <button id="restore-excluded" disabled>Restore automatically excluded cells</button><p id="exclusion-info" class="small"></p>
+          <hr />
+          <button id="load-review" disabled>Resume saved review</button
+          ><input id="review-file" type="file" accept=".json" hidden /><button
+            id="save-review"
+            disabled
+          >
+            Save review JSON</button
+          ><button id="export-counts" disabled>
+            Export per-cell counts CSV</button
+          ><button id="export-boxes" disabled>Export detection audit CSV</button
+          ><button id="export-png" disabled>Export annotated PNG</button>
+        </aside>
+        <section class="panel image-panel">
+          <div class="viewer-heading">
+            <div>
+              <h2 id="stage-title">Detect cells</h2>
+              <p id="image-info" class="small">No image selected</p>
+            </div>
+            <div class="button-row">
+              <button id="zoom-out" disabled>−</button
+              ><button id="zoom-fit" disabled>Fit</button
+              ><button id="zoom-in" disabled>+</button>
+            </div>
           </div>
-          <select id="box-class" aria-label="Class for a new box" disabled><option value="0">Cytosolic</option><option value="1">Centrosomal</option><option value="2">Cell</option></select>
-          <div class="group zoom-group" role="group" aria-label="Image zoom">
-            <button id="zoom-out" aria-label="Zoom out" disabled>−</button><span id="zoom-value" class="zoom-value" aria-live="polite">Fit</span><button id="zoom-in" aria-label="Zoom in" disabled>+</button><button id="zoom-fit" disabled>Fit</button><button id="zoom-native" disabled>100%</button>
+          <label for="display-brightness">Display brightness (view only)</label><input id="display-brightness" type="range" min="1" max="5" step="0.1" value="1" />
+          <p class="small">Wheel: zoom at cursor · middle-button or Alt-drag: pan · double-click: fit</p><div id="viewer" tabindex="0">
+            <div id="empty">Open a microscopy image to begin.</div>
+            <canvas id="canvas" hidden></canvas>
           </div>
-          <label class="labels-toggle"><input id="show-labels" type="checkbox" checked disabled> Labels</label>
-        </div>
-        <div id="viewer" class="viewer" data-tool="pan" tabindex="0" aria-label="Image viewer. Use the toolbar to pan, select or draw boxes.">
-          <div id="empty" class="empty">
-            <svg class="empty-icon" viewBox="0 0 80 80" fill="none" aria-hidden="true"><rect x="14" y="14" width="52" height="52" rx="8" stroke="currentColor" stroke-width="1.5"/><path d="M40 25v30M25 40h30" stroke="currentColor" stroke-width="1.5"/><circle cx="40" cy="40" r="10" stroke="currentColor" stroke-width="1.5"/></svg>
-            <h3>Your image goes here</h3><p>Open a microscopy image to inspect it at full resolution.</p><span class="empty-caption">You can draw boxes without running the model.</span>
-          </div>
-          <div id="stage" class="stage"><canvas id="canvas" aria-label="Microscopy image with editable detection boxes"></canvas></div>
-        </div>
-        <div class="viewer-footer"><p id="tool-help" class="small">Pan: drag the image. Use +/− to zoom, or hold Ctrl/⌘ while scrolling.</p><span class="pixel-label">Original pixel coordinates</span></div>
-      </section>
-      <aside class="panel inspector" aria-labelledby="results-heading">
-        <div class="section-title"><span class="step">03</span><h2 id="results-heading">Review boxes</h2></div>
-        <div class="total-card glass-card"><div><span class="small">Visible boxes</span><b id="total">0</b></div><span class="stat-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-focus"/></svg></span><span class="manual-label"><b id="manual-count">0</b> manually added</span></div>
-        <div class="stats" aria-live="polite">
-          <div class="count-row glass-card"><span><span class="stat-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-filament"/></svg></span>Cytosolic</span><b id="cyto">0</b></div>
-          <div class="count-row glass-card"><span><span class="stat-icon white" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-centre"/></svg></span>Centrosomal</span><b id="centro">0</b></div>
-          <div class="count-row glass-card"><span><span class="stat-icon blue" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-cell"/></svg></span>Cell</span><b id="cell">0</b></div>
-        </div>
-        <div class="list-heading"><h3>Box list</h3><span class="small">Click to locate</span></div>
-        <div id="detection-list" class="detection-list" aria-label="Visible detection boxes"><p class="list-empty">Boxes will appear here after detection or manual annotation.</p></div>
-        <div class="pagination" aria-label="Box list pages"><button id="list-prev" class="secondary" disabled aria-label="Previous box page">←</button><span id="list-page" class="small">0 boxes</span><button id="list-next" class="secondary" disabled aria-label="Next box page">→</button></div>
-        <div class="selection"><h3>Selected box</h3><p id="selection-info">Select a box to inspect or delete it.</p><button id="delete-box" class="wide danger" disabled>Delete selected</button><div class="correction-actions"><button id="undo" class="secondary" disabled>Undo</button><button id="restore" class="secondary" disabled>Reset corrections</button></div></div>
-        <p class="small review-note">Solid outlines are model predictions. Dashed outlines are manual boxes.</p>
-      </aside>
-    </div>
-    <footer><span id="model-info">Refined YOLOv10n · 1024-pixel whole-image detection</span><span>Download your review before closing this page.</span></footer>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
-  <script src="tiling.js"></script><script src="review.js"></script><script src="app.js"></script>
-</body>
+          <p id="help" class="small">
+            Use the stage buttons to follow the analysis.
+          </p>
+          <p id="status" role="status" aria-live="polite">
+            Ready for an image.
+          </p>
+          <section id="count-results" hidden>
+            <div class="results-heading">
+              <h2>Counts by cell</h2>
+              <span id="result-state" class="pill">Model candidates</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cell</th>
+                    <th>Cytosolic count</th>
+                    <th>Model</th>
+                    <th>Added manually</th>
+                  </tr>
+                </thead>
+                <tbody id="count-rows"></tbody>
+              </table>
+            </div>
+            <p id="unresolved"></p>
+            <p class="small">
+              Counts include visible cytosolic candidates with a clear cell
+              assignment. Review the unresolved candidates before using the
+              results.
+            </p>
+          </section>
+        </section>
+      </div>
+      <footer>
+        Refined1024 cytosolic detector · Trained cell segmentation
+      </footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.11.1/src/sha256.min.js"></script>
+    <script src="tiling.js?v=flip-agreement-1"></script>
+    <script src="review.js"></script>
+    <script src="cells.js"></script>
+    <script src="segmentation.js"></script>
+    <script src="eligibility.js"></script>
+    <script src="app.js?v=flip-agreement-1"></script>
+  </body>
 </html>

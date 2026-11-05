@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Detect and count cytosolic microtubules within each cell, with cell-ownership and faint-object review.">
+  <title>Per-cell Microtubule Analysis</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="glass-scene" aria-hidden="true"><span class="ambient-orb orb-pink"></span><span class="ambient-orb orb-blue"></span><span class="ambient-orb orb-white"></span><span class="ambient-ring"></span></div>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/><circle cx="12" cy="12" r="4"/><path d="M12 6v2m0 8v2m-6-6h2m8 0h2"/></symbol>
+    <symbol id="icon-filament" viewBox="0 0 24 24"><path d="M4 18c6 0 4-12 10-12h6M4 12c6 0 5 6 10 6h6M4 6h3m11 6h2"/><circle cx="5" cy="18" r="1"/></symbol>
+    <symbol id="icon-centre" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></symbol>
+    <symbol id="icon-cell" viewBox="0 0 24 24"><path d="M20 10c2 6-3 11-9 11S2 17 3 11 7 2 12 3s7 2 8 7Z"/><circle cx="11" cy="12" r="3"/></symbol>
+  </svg>
+  <header class="app-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-focus"/></svg></span><strong>Per-cell MT Analysis</strong></div>
+    <div class="header-meta"><span class="privacy"><span aria-hidden="true">●</span> Images stay in your browser</span><span class="badge">RESEARCH PROTOTYPE</span></div>
+  </header>
+  <main>
+    <div class="workspace-heading">
+      <div><div class="eyebrow">Per-cell detection and counting</div><h1>Cytosolic microtubule analysis</h1><p class="small">Cell ownership and faint-object performance are under validation. Current sidebar totals are image-level candidate counts.</p></div>
+      <span id="workspace-state" class="state-pill" role="status">No image loaded</span>
+    </div>
+    <div class="layout">
+      <section class="panel settings" aria-labelledby="settings-heading">
+        <div class="section-title"><span class="step">01</span><h2 id="settings-heading">Set up analysis</h2></div>
+        <div class="settings-section">
+          <label for="file">Microscopy image</label>
+          <div class="upload"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Open an image</strong><span class="small">Single-page TIFF, PNG or JPEG</span><input type="file" id="file" accept=".tif,.tiff,.png,.jpg,.jpeg"></div>
+          <button id="load-review" class="wide secondary" disabled>Resume saved review</button>
+          <input id="review-file" type="file" accept=".json,application/json" hidden>
+          <p class="small">Open the original image before loading its review JSON.</p>
+        </div>
+        <div class="settings-section">
+          <label class="range-label" for="confidence">Minimum confidence <strong id="threshold">0.174</strong></label>
+          <input id="confidence" type="range" min="0.05" max="0.95" step="0.001" value="0.174">
+          <div class="range-ends" aria-hidden="true"><span>More candidates</span><span>Higher confidence</span></div>
+          <button id="run" class="wide primary" disabled>Run detection</button>
+          <progress id="inference-progress" max="100" aria-label="Image analysis progress" hidden></progress>
+          <p id="status" class="status" role="status" aria-live="polite">Select an image to begin. You can also draw boxes manually.</p>
+        </div>
+        <div class="exports">
+          <h3>Save your work</h3>
+          <button id="json" class="wide secondary" disabled>Save review JSON <span aria-hidden="true">↓</span></button>
+          <button id="csv" class="wide secondary" disabled>Export detections CSV <span aria-hidden="true">↓</span></button>
+          <button id="save" class="wide secondary" disabled>Export annotated PNG <span aria-hidden="true">↓</span></button>
+          <p class="small">JSON lets you resume later. All coordinates use original image pixels.</p>
+        </div>
+        <details class="method-note"><summary>About these results</summary><p class="small">Review every candidate box. The model has not been independently validated. Counts do not measure filament length or fluorescence intensity.</p><p class="small">A manual box has no model confidence score. Raising the confidence threshold hides predictions without deleting them.</p></details>
+      </section>
+      <section id="review-panel" class="panel image-panel" aria-labelledby="review-heading">
+        <div class="review-header"><div class="section-title"><span class="step">02</span><h2 id="review-heading">Inspect image</h2></div><p id="image-info" class="small">No image selected</p></div>
+        <div class="toolbar" aria-label="Image review controls">
+          <div class="group tool-group" role="group" aria-label="Review tool">
+            <button id="tool-pan" aria-pressed="true" disabled>Pan</button>
+            <button id="tool-select" aria-pressed="false" disabled>Select</button>
+            <button id="tool-draw" aria-pressed="false" disabled>Draw box</button>
+          </div>
+          <select id="box-class" aria-label="Class for a new box" disabled><option value="0">Cytosolic</option><option value="1">Centrosomal</option><option value="2">Cell</option></select>
+          <div class="group zoom-group" role="group" aria-label="Image zoom">
+            <button id="zoom-out" aria-label="Zoom out" disabled>−</button><span id="zoom-value" class="zoom-value" aria-live="polite">Fit</span><button id="zoom-in" aria-label="Zoom in" disabled>+</button><button id="zoom-fit" disabled>Fit</button><button id="zoom-native" disabled>100%</button>
+          </div>
+          <label class="labels-toggle"><input id="show-labels" type="checkbox" checked disabled> Labels</label>
+        </div>
+        <div id="viewer" class="viewer" data-tool="pan" tabindex="0" aria-label="Image viewer. Use the toolbar to pan, select or draw boxes.">
+          <div id="empty" class="empty">
+            <svg class="empty-icon" viewBox="0 0 80 80" fill="none" aria-hidden="true"><rect x="14" y="14" width="52" height="52" rx="8" stroke="currentColor" stroke-width="1.5"/><path d="M40 25v30M25 40h30" stroke="currentColor" stroke-width="1.5"/><circle cx="40" cy="40" r="10" stroke="currentColor" stroke-width="1.5"/></svg>
+            <h3>Your image goes here</h3><p>Open a microscopy image to inspect it at full resolution.</p><span class="empty-caption">You can draw boxes without running the model.</span>
+          </div>
+          <div id="stage" class="stage"><canvas id="canvas" aria-label="Microscopy image with editable detection boxes"></canvas></div>
+        </div>
+        <div class="viewer-footer"><p id="tool-help" class="small">Pan: drag the image. Use +/− to zoom, or hold Ctrl/⌘ while scrolling.</p><span class="pixel-label">Original pixel coordinates</span></div>
+      </section>
+      <aside class="panel inspector" aria-labelledby="results-heading">
+        <div class="section-title"><span class="step">03</span><h2 id="results-heading">Review boxes</h2></div>
+        <div class="total-card glass-card"><div><span class="small">Visible boxes</span><b id="total">0</b></div><span class="stat-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-focus"/></svg></span><span class="manual-label"><b id="manual-count">0</b> manually added</span></div>
+        <div class="stats" aria-live="polite">
+          <div class="count-row glass-card"><span><span class="stat-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-filament"/></svg></span>Cytosolic</span><b id="cyto">0</b></div>
+          <div class="count-row glass-card"><span><span class="stat-icon white" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-centre"/></svg></span>Centrosomal</span><b id="centro">0</b></div>
+          <div class="count-row glass-card"><span><span class="stat-icon blue" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-cell"/></svg></span>Cell</span><b id="cell">0</b></div>
+        </div>
+        <div class="list-heading"><h3>Box list</h3><span class="small">Click to locate</span></div>
+        <div id="detection-list" class="detection-list" aria-label="Visible detection boxes"><p class="list-empty">Boxes will appear here after detection or manual annotation.</p></div>
+        <div class="pagination" aria-label="Box list pages"><button id="list-prev" class="secondary" disabled aria-label="Previous box page">←</button><span id="list-page" class="small">0 boxes</span><button id="list-next" class="secondary" disabled aria-label="Next box page">→</button></div>
+        <div class="selection"><h3>Selected box</h3><p id="selection-info">Select a box to inspect or delete it.</p><button id="delete-box" class="wide danger" disabled>Delete selected</button><div class="correction-actions"><button id="undo" class="secondary" disabled>Undo</button><button id="restore" class="secondary" disabled>Reset corrections</button></div></div>
+        <p class="small review-note">Solid outlines are model predictions. Dashed outlines are manual boxes.</p>
+      </aside>
+    </div>
+    <footer><span id="model-info">Refined YOLOv10n · 1024-pixel whole-image detection</span><span>Download your review before closing this page.</span></footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <script src="tiling.js"></script><script src="review.js"></script><script src="app.js"></script>
+</body>
+</html>

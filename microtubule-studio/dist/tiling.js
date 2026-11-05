@@ -55,4 +55,32 @@ function wholeImageInput(rgba, width, height, size) {
     ? Math.min(height,Math.max(0,(v-top)*height/h))
     : Math.min(width,Math.max(0,(v-left)*width/w)))};
 }
-if (typeof module !== 'undefined') module.exports = {tilePositions, intersectionOverUnion, suppressOverlaps, wholeImageInput};
+// Each flipped detection can support at most one original detection.
+function mergeFlipAgreement(original, flipped) {
+  const used = new Set();
+  const merged = original.map((detection) => {
+    let match = -1;
+    let bestOverlap = 0.5;
+    flipped.forEach((candidate, index) => {
+      if (used.has(index)) return;
+      const overlap = intersectionOverUnion(detection.box, candidate.box);
+      if (overlap >= 0.5 && (match < 0 || overlap > bestOverlap)) {
+        match = index;
+        bestOverlap = overlap;
+      }
+    });
+    if (match < 0) return {...detection, score: detection.score / 2};
+    used.add(match);
+    const partner = flipped[match];
+    return {
+      ...detection,
+      box: detection.box.map((coordinate, index) => (coordinate + partner.box[index]) / 2),
+      score: (detection.score + partner.score) / 2,
+    };
+  });
+  for (const [index, detection] of flipped.entries()) {
+    if (!used.has(index)) merged.push({...detection, score: detection.score / 2});
+  }
+  return suppressOverlaps(merged);
+}
+if (typeof module !== 'undefined') module.exports = {tilePositions, intersectionOverUnion, suppressOverlaps, wholeImageInput, mergeFlipAgreement};

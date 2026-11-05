@@ -1,0 +1,22 @@
+{
+  "name": "MobileNetV3-Small cell segmentation",
+  "url": "cell_segmentation.onnx",
+  "inputSize": 1024,
+  "channels": [
+    "foreground",
+    "boundary",
+    "normalized_distance"
+  ],
+  "postprocessing": {
+    "foregroundThreshold": 0.5,
+    "seedDistance": 120,
+    "boundaryWeight": 1.0,
+    "minimumArea": 16384,
+    "requireCentrosomes": false,
+    "markerThreshold": 0.25,
+    "excludeBorderCells": false,
+    "borderMarginPixels": 2
+  },
+  "training_epoch": 1,
+  "onnx_sha256": "072d9461a641b1e7d36801636e8ffad12274d4d4acddc1c78a3b887216ffefb4"
+}

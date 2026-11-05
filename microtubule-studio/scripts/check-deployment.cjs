@@ -31,11 +31,19 @@ for (const iou of [manifest.overlap_suppression_iou-0.001,manifest.overlap_suppr
     'Default overlap suppression differs from the evaluated cutoff.');
 }
 for (const [,src] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
-  if (!/^(?:https?:|#|data:)/.test(src) && !fs.existsSync(path.join(dist,src))) {
+  if (!/^(?:https?:|#|data:)/.test(src) && !fs.existsSync(path.join(dist,src.split(/[?#]/, 1)[0]))) {
     throw Error('Missing site asset: '+src);
   }
 }
-for (const name of ['app.js','review.js','tiling.js']) {
+for (const name of ['app.js','review.js','tiling.js','cells.js','segmentation.js','eligibility.js']) {
   execFileSync(process.execPath,['--check',path.join(dist,name)],{stdio:'inherit'});
 }
-console.log('Selected ONNX hash, class mapping, evaluated cutoffs and static assets verified.');
+const segmentation = JSON.parse(fs.readFileSync(path.join(dist,'segmentation-config.json'),'utf8'));
+assert.equal(segmentation.inputSize,1024,'Segmentation input must be 1024 square.');
+assert.equal(segmentation.url,manifest.segmentation.file,'Segmentation file differs from the verified model.');
+assert.equal(segmentation.onnx_sha256,manifest.segmentation.sha256,'Segmentation configuration hash differs from the manifest.');
+const segmentModel = fs.readFileSync(path.join(dist,segmentation.url));
+assert.equal(crypto.createHash('sha256').update(segmentModel).digest('hex'),manifest.segmentation.sha256,'Segmentation ONNX bytes have changed.');
+const examples = JSON.parse(fs.readFileSync(path.join(dist,'eligibility-examples.json'),'utf8'));
+assert.ok(examples.excluded.length && examples.retained.length,'The eligibility filter needs both reviewed example groups.');
+console.log('Detector and segmentation hashes, class mapping, cutoffs and static assets verified.');

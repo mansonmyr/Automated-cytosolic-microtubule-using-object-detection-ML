@@ -17,5 +17,15 @@
   "overlap_suppression_iou": 0.5,
   "development_count_MAE": 3.066666666666667,
   "development_count_RMSE": 5.323602233520151,
-  "interpretation": "Development-source comparison, using supplied cell polygons. Viewer counts are image-level candidates."
+  "interpretation": "Historical count metrics used supplied polygons. The current viewer reports counts for confirmed retained polygons.",
+  "segmentation": {
+    "file": "cell_segmentation.onnx",
+    "input": [
+      1,
+      3,
+      1024,
+      1024
+    ],
+    "sha256": "072d9461a641b1e7d36801636e8ffad12274d4d4acddc1c78a3b887216ffefb4"
+  }
 }

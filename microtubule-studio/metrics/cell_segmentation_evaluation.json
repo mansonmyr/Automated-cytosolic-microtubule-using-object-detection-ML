@@ -1,0 +1,59 @@
+{
+  "best_epoch": 1,
+  "cell_settings": {
+    "foregroundThreshold": 0.5,
+    "seedDistance": 120,
+    "boundaryWeight": 1.0,
+    "minimumArea": 16384
+  },
+  "checkpoint_selection": "Validation instance F1 for refinement arms; historical foreground Dice for baseline",
+  "instance_settings_selection": "Largest validation polygon F1 at IoU 0.5, then matched mean IoU",
+  "results": {
+    "validation": {
+      "images": 20,
+      "reference_cells": 55,
+      "predicted_cells": 51,
+      "matched_cells_iou_0_5": 42,
+      "polygon_precision": 0.8235294117647058,
+      "polygon_recall": 0.7636363636363637,
+      "polygon_f1": 0.7924528301886793,
+      "matched_mean_iou": 0.6892262864367645,
+      "foreground_dice_mean_at_0_5": 0.8450211405754089,
+      "annotated_masks_count_mae": 1.2,
+      "annotated_masks_count_rmse": 2.280350850198276,
+      "annotated_masks_exact_count_fraction": 0.509090909090909,
+      "automatic_masks_count_mae": 1.309090909090909,
+      "automatic_masks_count_rmse": 2.4045411582707796,
+      "automatic_masks_exact_count_fraction": 0.4727272727272727,
+      "unmatched_predicted_cells": 9,
+      "cytosolic_counts_in_unmatched_predicted_cells": 3
+    },
+    "development": {
+      "images": 25,
+      "reference_cells": 166,
+      "predicted_cells": 182,
+      "matched_cells_iou_0_5": 106,
+      "polygon_precision": 0.5824175824175825,
+      "polygon_recall": 0.6385542168674698,
+      "polygon_f1": 0.6091954022988505,
+      "matched_mean_iou": 0.6826649375449293,
+      "foreground_dice_mean_at_0_5": 0.8123610544204712,
+      "annotated_masks_count_mae": 3.5060240963855422,
+      "annotated_masks_count_rmse": 5.875208276236394,
+      "annotated_masks_exact_count_fraction": 0.14457831325301204,
+      "automatic_masks_count_mae": 6.343373493975903,
+      "automatic_masks_count_rmse": 10.45558592850892,
+      "automatic_masks_exact_count_fraction": 0.08433734939759036,
+      "unmatched_predicted_cells": 76,
+      "cytosolic_counts_in_unmatched_predicted_cells": 453
+    }
+  },
+  "onnx_maximum_absolute_error": 5.117058753967285e-05,
+  "limitations": [
+    "Development sources reused in previous model selection",
+    "Ground-truth cytosolic counts exclude ambiguous original ownership",
+    "Automatic counting assigns zero to a reference cell with no predicted polygon match at IoU 0.5",
+    "Counts in unmatched predicted cells are reported separately",
+    "Cytosolic detector is unchanged and uses original intensity at cutoff 0.174"
+  ]
+}
