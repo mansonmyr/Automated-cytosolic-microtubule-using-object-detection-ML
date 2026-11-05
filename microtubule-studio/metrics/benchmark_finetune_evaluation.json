@@ -1,0 +1,74 @@
+{
+  "candidate_validation": {
+    "checkpoint": "epoch0",
+    "cutoff": 0.05,
+    "precision": 0.45871559633027525,
+    "recall": 0.4807692307692308,
+    "f1": 0.4694835680751174,
+    "faint_recall": 0.45714285714285713,
+    "AP50": 0.3315636832849543,
+    "per_cell_mae": 0.75,
+    "per_cell_rmse": 1.4871242253216312,
+    "reference_resolved_cells": 52
+  },
+  "released_validation": {
+    "checkpoint": "released",
+    "cutoff": 0.05,
+    "precision": 0.4380952380952381,
+    "recall": 0.4423076923076923,
+    "f1": 0.44019138755980863,
+    "faint_recall": 0.42857142857142855,
+    "AP50": 0.3357726076976202,
+    "per_cell_mae": 0.8461538461538461,
+    "per_cell_rmse": 1.4675987714106855,
+    "reference_resolved_cells": 52
+  },
+  "candidate_development": {
+    "cutoff": 0.05,
+    "precision": 0.413953488372093,
+    "recall": 0.7228426395939086,
+    "f1": 0.5264325323475046,
+    "faint_recall": 0.7546583850931677,
+    "AP50": 0.44037963942073627,
+    "per_cell_mae": 3.8518518518518516,
+    "per_cell_rmse": 5.155363981114988,
+    "reference_resolved_cells": 135
+  },
+  "released_development_default": {
+    "cutoff": 0.174,
+    "precision": 0.5590094836670179,
+    "recall": 0.5385786802030457,
+    "f1": 0.5486039296794208,
+    "faint_recall": 0.5450310559006211,
+    "AP50": 0.4462546929101576,
+    "per_cell_mae": 3.066666666666667,
+    "per_cell_rmse": 5.323602233520151,
+    "reference_resolved_cells": 135
+  },
+  "released_development_calibrated": {
+    "cutoff": 0.05,
+    "precision": 0.41337209302325584,
+    "recall": 0.7218274111675127,
+    "f1": 0.5256931608133086,
+    "faint_recall": 0.7453416149068323,
+    "AP50": 0.4462546929101576,
+    "per_cell_mae": 3.8,
+    "per_cell_rmse": 5.055982887922284,
+    "reference_resolved_cells": 135
+  },
+  "checkpoint": "epoch0.pt",
+  "candidate_passed": false,
+  "deployed": false,
+  "release_gate": "Higher validation F1, no decline in development F1 or faint recall, lower per-cell MAE than the released original-image default.",
+  "candidate_at_release_cutoff": {
+    "cutoff": 0.174,
+    "precision": 0.560197910940077,
+    "recall": 0.5172588832487309,
+    "f1": 0.5378727896542623,
+    "faint_recall": 0.5341614906832298,
+    "AP50": 0.44037963942073627,
+    "per_cell_mae": 3.237037037037037,
+    "per_cell_rmse": 5.7303609866252785,
+    "reference_resolved_cells": 135
+  }
+}
